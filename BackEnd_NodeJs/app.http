@@ -1,0 +1,44 @@
+GET http://localhost:9000/ HTTP/1.1
+
+###
+GET http://localhost:9000/users
+
+###
+GET http://localhost:9000/user-details/1
+
+###
+POST  http://localhost:9000/add-user
+Content-Type: application/json
+
+
+{   "userData":{
+
+    "specialization_name":"node, express,json,react", 
+    "associate_name": "yedida",
+    "phone": 9908934531,
+    "address":"vtz" 
+}
+
+}
+
+
+###
+PUT http://localhost:9000/update-user/1
+Content-Type: application/json
+
+
+{   "userData":{
+    "specialization_name":"node, express,json,react", 
+    "associate_name": "yedida",
+    "phone": 9908934531,
+    "address":"vtz" ,
+	"specialization_id": 2,
+    "associate_id": 1
+}
+
+}
+
+
+###
+DELETE  http://localhost:9000/1
+Content-Type: application/json

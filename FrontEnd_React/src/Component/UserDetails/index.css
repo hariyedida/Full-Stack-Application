@@ -1,0 +1,138 @@
+.admin-ui {
+	height: 100vh;
+	margin: 20px 5px 20px 5px;
+}
+
+.pagination-container {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+}
+
+.user-field-search-input-container {
+	border: 1px solid #475569;
+	border-radius: 5px;
+	height: 30px;
+	display: flex;
+	align-items: center;
+	margin-bottom: 20px;
+}
+
+.user-field-search-input {
+	height: 100%;
+	flex-grow: 1;
+	padding: 0px;
+	border: none;
+	font-family: DM Sans;
+	font-style: normal;
+	font-weight: 500;
+	font-size: 15px;
+	line-height: 24px;
+	color: #475569;
+	margin: 0px;
+	outline: none;
+	margin-left: 10px;
+	background-color: transparent;
+}
+
+.user-field-clear-search-button {
+	height: 100%;
+	width: 50px;
+	border: none;
+	background-color: transparent;
+	border-left: solid 1px #475569;
+	padding: 0px;
+	font-size: 15px;
+	color: #475569;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+table {
+	border-collapse: collapse;
+	width: 100%;
+	table-layout: auto;
+}
+
+th {
+	text-align: left;
+	height: 30px;
+	vertical-align: middle;
+	width: 20;
+}
+
+tr {
+	border-bottom: solid 1px rgb(202, 200, 200);
+}
+
+td {
+	width: fit-content;
+	margin-right: 10px;
+	padding-right: 10px;
+	height: 40px;
+	word-break: break-all;
+}
+
+@media screen and (min-width: 768px) {
+	th {
+		text-align: left;
+		height: 30px;
+		vertical-align: middle;
+		max-width: 120px;
+	}
+
+	td {
+		margin-right: 10px;
+		padding-right: 10px;
+		height: 40px;
+	}
+
+	.admin-ui {
+		height: 100vh;
+		margin: 20px;
+	}
+}
+
+.delete-use-details-button-container {
+	margin-top: 15px;
+	display: flex;
+	justify-content: space-between;
+}
+
+.delete-user-details-button {
+	border-radius: 8px;
+	background-color: #e93434;
+	outline: none;
+	cursor: pointer;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	margin: 5px;
+	padding: 8px;
+	color: white;
+}
+
+.create-user-details-button {
+	border-radius: 8px;
+	background-color: #409b24;
+	outline: none;
+	cursor: pointer;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	margin: 5px;
+	padding: 8px;
+	color: white;
+}
+
+.check-box-input-field {
+	max-width: 120px;
+	min-width: 30px;
+}
+
+button {
+	background-color: transparent;
+	border: none;
+	outline: none;
+}
