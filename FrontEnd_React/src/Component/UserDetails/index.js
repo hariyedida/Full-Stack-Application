@@ -10,6 +10,7 @@ import { FcCancel } from "react-icons/fc";
 class UserDetails extends Component {
 	state = {
 		userList: this.props.userList,
+		specializationsList: this.props.specializationsList,
 		isCheckedAllUsers: false,
 		checkedUserIdDict: {},
 		editUserDataId: null,
@@ -17,11 +18,12 @@ class UserDetails extends Component {
 		searchInput: "",
 		deletedUserItems: [],
 		newUserDetails: {
-			specializationName: "",
+			specializationName: [],
 			associateName: "",
 			phone: null,
 			address: "",
 		},
+		specList: [],
 	};
 
 	createNewUser = () => {
@@ -30,10 +32,27 @@ class UserDetails extends Component {
 
 	onChangeUserFormDetails = (event) => {
 		const { newUserDetails } = this.state;
-		const editFieldName = event.target.getAttribute("name");
 		const editFieldValue = event.target.value;
+		const editFieldName = event.target.getAttribute("name");
 		const newUserDetailsEdit = { ...newUserDetails };
-		newUserDetailsEdit[editFieldName] = editFieldValue;
+		if (editFieldName === "specializationName") {
+			const id = event.target.id;
+			let { specList } = this.state;
+			if (event.target.checked) {
+				if (!specList.includes(id)) {
+					specList.push(parseInt(id));
+				}
+			} else {
+				let result = specList.filter((eachId) => eachId !== parseInt(id));
+				specList = [...result];
+			}
+			this.setState({ specList: [...specList] }, () => {
+				newUserDetailsEdit[editFieldName] = specList;
+			});
+		} else {
+			newUserDetailsEdit[editFieldName] = editFieldValue;
+		}
+
 		this.setState({ newUserDetails: newUserDetailsEdit });
 	};
 
@@ -63,8 +82,7 @@ class UserDetails extends Component {
 	};
 
 	cancelNewUserDetails = () => {
-		const { fetchUserDetails } = this.state;
-		this.setState({ updateUserData: fetchUserDetails }, fetchUserDetails());
+		this.setState({ createNewUserForm: false });
 	};
 
 	setEditUserId = () => {
@@ -73,7 +91,6 @@ class UserDetails extends Component {
 
 	getSearchResults = async () => {
 		const { searchInput } = this.state;
-		console.log(searchInput);
 		const { getAllUserDetails } = this.props;
 		getAllUserDetails(searchInput);
 	};
@@ -141,7 +158,7 @@ class UserDetails extends Component {
 		const { getAllUserDetails } = this.props;
 		const { deletedUserItems, searchInput } = this.state;
 		const deleteIds = deletedUserItems.map(
-			(eachUser) => eachUser.specializationId
+			(eachUser) => eachUser.associateId
 		);
 		const options = {
 			method: "DELETE",
@@ -151,6 +168,7 @@ class UserDetails extends Component {
 			body: JSON.stringify({ deleteIds: deleteIds }),
 		};
 		const url = `http://localhost:9000/delete-user`;
+		console.log(url);
 		const response = await fetch(url, options);
 		if (response.ok) {
 			getAllUserDetails(searchInput);
@@ -191,6 +209,14 @@ class UserDetails extends Component {
 		}
 	};
 
+	onClickEditUserDetails = (userDetails) => {
+		console.log(userDetails);
+		this.setState({
+			editUserDataId: userDetails.associateId,
+			updateUserData: { ...userDetails },
+		});
+	};
+
 	render() {
 		const { getAllUserDetails } = this.props;
 		const {
@@ -200,6 +226,7 @@ class UserDetails extends Component {
 			searchInput,
 			isCheckedAllUsers,
 			editUserDataId,
+			specializationsList,
 		} = this.state;
 
 		return (
@@ -209,7 +236,7 @@ class UserDetails extends Component {
 						type='search'
 						value={searchInput}
 						onChange={this.onChangeSearchInput}
-						placeholder='search by name,email,specialization'
+						placeholder='search by associate name'
 						className='user-field-search-input'
 						onKeyDown={(e) => {
 							if (e.key === "Enter") {
@@ -255,6 +282,7 @@ class UserDetails extends Component {
 											editedUserDetails={eachUser}
 											setEditUserId={this.setEditUserId}
 											getAllUserDetails={getAllUserDetails}
+											specializationsList={specializationsList}
 										/>
 									) : (
 										<tr
@@ -294,7 +322,7 @@ class UserDetails extends Component {
 														type='button'
 														onClick={() => {
 															this.onClickDeleteUserDetails(
-																eachUser.specializationId
+																eachUser.associateId
 															);
 														}}
 													>
@@ -320,7 +348,6 @@ class UserDetails extends Component {
 								</td>
 								<td> </td>
 								<td>
-									{/* read user edit details */}
 									<input
 										type='text'
 										required='*required'
@@ -331,18 +358,25 @@ class UserDetails extends Component {
 									/>
 								</td>
 								<td>
-									{/* read user edit details */}
-									<input
-										type='text'
-										required='*required'
-										placeholder='Enter a role...'
-										name='specializationName'
-										value={newUserDetails.specializationName}
-										onChange={this.onChangeUserFormDetails}
-									/>
+									<div className='specialization-container'>
+										{specializationsList.map((eachSpec) => (
+											<div className='specialization-input-container'>
+												<input
+													key={eachSpec.specializationId}
+													type='checkbox'
+													name='specializationName'
+													id={eachSpec.specializationId}
+													value={eachSpec.specializationName}
+													onChange={this.onChangeUserFormDetails}
+												/>
+												<label htmlFor={eachSpec.specializationId}>
+													{eachSpec.specializationName}
+												</label>
+											</div>
+										))}
+									</div>
 								</td>
 								<td>
-									{/* read user edit details */}
 									<input
 										type='int'
 										required='*required'

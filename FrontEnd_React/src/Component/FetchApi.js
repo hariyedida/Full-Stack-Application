@@ -7,45 +7,70 @@ class FetchApi extends Component {
 	state = {
 		apiStaus: apiStatusConstants.initial,
 		userList: [],
+		specializations: [],
 	};
 
 	componentDidMount = () => {
 		this.getAllUserDetails();
 	};
 
-	getAllUserDetails = async (searchInput) => {
+	getSpecializations = async () => {
 		this.setState({ apiStatus: apiStatusConstants.inProgress });
-		searchInput = searchInput === undefined && "";
-		const apiUrl = `http://localhost:9000/users?search=${searchInput}`;
-		const response = await fetch(apiUrl);
-		if (response.ok === true) {
-			const fetchedData = await response.json();
-			const { userData } = fetchedData;
-			const updatedData = userData.map((eachUser) => ({
-				associateId: eachUser.associate_id,
-				specializationName: eachUser.specialization_name,
-				associateName: eachUser.associate_name,
-				phone: eachUser.phone,
-				address: eachUser.address,
-				specializationId: eachUser.specialization_id,
-				checked: false,
-			}));
 
+		const apiUrl = `http://localhost:9000/specializations`;
+		const response = await fetch(apiUrl);
+
+		if (response.ok === true) {
+			const fetchedData1 = await response.json();
+			const { specialization } = fetchedData1;
+			const updatedSpeciList = specialization.map((eachSpec) => ({
+				specializationId: eachSpec.specialization_id,
+				specializationName: eachSpec.specialization_name,
+			}));
 			this.setState({
+				specializations: updatedSpeciList,
 				apiStatus: apiStatusConstants.success,
-				userList: [...updatedData],
 			});
 		} else {
 			this.setState({ apiStatus: apiStatusConstants.failure });
 		}
 	};
 
+	getAllUserDetails = async (searchInput) => {
+		this.setState({ apiStatus: apiStatusConstants.inProgress });
+		let searchInputQuery = searchInput === undefined ? "" : searchInput;
+		const apiUrl = `http://localhost:9000/users?search=${searchInputQuery}`;
+		const response = await fetch(apiUrl);
+		if (response.ok === true) {
+			const fetchedData = await response.json();
+			const { userData } = fetchedData;
+			const updatedData = userData.map((eachUser) => ({
+				associateId: eachUser.associate_id,
+				specializationName: eachUser.specialization,
+				associateName: eachUser.associate_name,
+				phone: eachUser.phone,
+				address: eachUser.address,
+				checked: false,
+			}));
+
+			this.setState(
+				{
+					apiStatus: apiStatusConstants.success,
+					userList: [...updatedData],
+				},
+				this.getSpecializations
+			);
+		} else {
+			this.setState({ apiStatus: apiStatusConstants.failure });
+		}
+	};
+
 	renderSuccesView = () => {
-		const { userList, totalPages } = this.state;
+		const { userList, specializations } = this.state;
 		return (
 			<UserDetails
 				userList={userList}
-				totalPages={totalPages}
+				specializationsList={specializations}
 				getAllUserDetails={this.getAllUserDetails}
 			/>
 		);

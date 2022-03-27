@@ -136,3 +136,12 @@ button {
 	border: none;
 	outline: none;
 }
+
+.specialization-container {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: wrap;
+}
+.specialization-input-container {
+	display: flex;
+}

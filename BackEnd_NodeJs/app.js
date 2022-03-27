@@ -3,8 +3,7 @@ const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
 const path = require("path");
 const cors = require("cors");
-const { response } = require("express");
-const dbPath = path.join(__dirname, "associate_management_db.db");
+const dbPath = path.join(__dirname, "saguna_users_db.db");
 
 const app = express();
 app.use(express.json());
@@ -36,11 +35,18 @@ app.get("/", (req, res) => {
 	res.send("Running");
 });
 
+app.get("/specializations", async (req, res) => {
+	let data = null;
+	const dataQuery = `SELECT * FROM specialization_master`;
+	data = await db.all(dataQuery);
+	res.status(200);
+	res.json({ specialization: data });
+});
+
 app.get("/users", async (req, res) => {
 	const { search } = req.query;
-	console.log(search);
 	let data = null;
-	const dataQuery = `SELECT * FROM associates_master NATURAL JOIN specialization_master WHERE associate_name LIKE '%${search}%'`;
+	const dataQuery = `SELECT associates_master.associate_id,associate_name,phone,address,group_concat(specialization_name) AS specialization FROM associates_master JOIN associate_specialization ON associates_master.associate_id = associate_specialization.associate_id JOIN specialization_master ON specialization_master.specialization_id = associate_specialization.specialization_id GROUP BY associates_master.associate_id HAVING associate_name LIKE '%${search}%';`;
 	data = await db.all(dataQuery);
 	res.status(200);
 	res.json({ userData: data });
@@ -50,11 +56,9 @@ app.get("/user-details/:id", async (req, res) => {
 	const { id } = req.params;
 	let userData = null;
 	try {
-		const dataQuery = `SELECT * FROM associates_master NATURAL JOIN specialization_master WHERE associate_id=${id}`;
+		const dataQuery = `SELECT associate_name,phone,address, group_concat(specialization_name) AS specialization FROM associates_master JOIN associate_specialization ON associates_master.associate_id = associate_specialization.associate_id JOIN specialization_master ON specialization_master.specialization_id = associate_specialization.specialization_id WHERE associates_master.associate_id=${id}`;
 		userData = await db.all(dataQuery);
-	} catch (error) {
-		console.log(error);
-	}
+	} catch (error) {}
 	if (userData.length > 0) {
 		res.status(200);
 		res.json({ userData });
@@ -66,38 +70,58 @@ app.get("/user-details/:id", async (req, res) => {
 app.post("/add-user", async (req, res) => {
 	const { userData } = req.body;
 	const { specialization_name, associate_name, phone, address } = userData;
-	const specialization_master_Query = `INSERT INTO specialization_master (specialization_name) VALUES ('${specialization_name}');`;
-	const specialization_master_res = await db.run(specialization_master_Query);
-	const { lastID } = specialization_master_res;
-	const associates_master_query = `INSERT INTO associates_master (associate_name, phone, address, specialization_id) VALUES('${associate_name}','${phone}',' ${address}', '${lastID}' );`;
+	const associates_master_query = `INSERT INTO associates_master (associate_name, phone, address) VALUES('${associate_name}',${phone},' ${address}' );`;
 	const associates_master_res = await db.run(associates_master_query);
+	const { lastID } = associates_master_res;
+	const specialization_ids_list = [];
+	for (let i of specialization_name) {
+		specialization_ids_list.push({ i: i, associate_id: lastID });
+	}
+	const insertValues = specialization_ids_list.map(
+		(eachValue) => `(${eachValue.i},${eachValue.associate_id})`
+	);
+	const modifiedValues = insertValues.join(",");
+	const associate_specialization_Query = `INSERT INTO associate_specialization (specialization_id,associate_id) VALUES ${modifiedValues};`;
+	const associates_specialization_res = await db.run(
+		associate_specialization_Query
+	);
+	res.status(200);
 	res.json({ associates_master_res });
 });
 
 app.put("/update-user/:id", async (req, res) => {
 	const { id } = req.params;
 	const { userData } = req.body;
-	console.log(id, userData);
-	const {
-		specialization_name,
-		associate_name,
-		phone,
-		address,
-		specialization_id,
-	} = userData;
-	const associates_master_Query = `UPDATE associates_master SET associate_name='${associate_name}',phone =${phone}, address='${address}',specialization_id=${specialization_id} WHERE associate_id=${id} ;`;
-	const specialization_master_Query = `UPDATE specialization_master SET specialization_name ='${specialization_name}' WHERE specialization_id=${specialization_id} ;`;
-	const associates_master_res = await db.run(associates_master_Query);
-	const specialization_master_res = await db.run(specialization_master_Query);
-	console.log(associates_master_res);
-	res.send(200);
+	const { specialization_name, associate_name, phone, address } = userData;
+	const delete_previous_specializations = `DELETE FROM associate_specialization WHERE associate_id = ${id}`;
+	const delete_res = await db.run(delete_previous_specializations);
+	const associates_master_query = `UPDATE associates_master SET associate_name = '${associate_name}', phone=${phone}, address=' ${address}' WHERE associate_id=${id};`;
+	const associates_master_res = await db.run(associates_master_query);
+	const lastID = id;
+	const specialization_ids_list = [];
+	for (let i of specialization_name) {
+		specialization_ids_list.push({ associate_id: lastID, i: i });
+	}
+	const insertValues = specialization_ids_list.map(
+		(eachValue) => `(${eachValue.i},${eachValue.associate_id})`
+	);
+	const modifiedValues = insertValues.join(",");
+
+	const associate_specialization_Query = `INSERT INTO associate_specialization (specialization_id,associate_id) VALUES ${modifiedValues};`;
+	const associates_specialization_res = await db.run(
+		associate_specialization_Query
+	);
+	res.status(200);
+	res.send("Data updated");
 });
 
 app.delete("/delete-user", async (req, res) => {
 	const { deleteIds } = req.body;
 	const str = deleteIds.join(",");
-	const deleteQuery = `DELETE FROM specialization_master WHERE specialization_id IN (${str})`;
-	await db.run(deleteQuery);
-	res.send(200);
-	console.log(deleteQuery);
+	const delete_associate_Query = `DELETE FROM associates_master WHERE associate_id IN (${str})`;
+	const delete_specialization_Query = `DELETE FROM associate_specialization WHERE associate_id IN (${str})`;
+	await db.run(delete_associate_Query);
+	await db.run(delete_specialization_Query);
+	res.send("user deleted");
+	res.status(200);
 });

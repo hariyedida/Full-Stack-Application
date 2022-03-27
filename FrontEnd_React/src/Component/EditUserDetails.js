@@ -7,6 +7,7 @@ class EditUserDetails extends Component {
 	state = {
 		fetchUserDetails: {},
 		updateUserData: {},
+		specList: [],
 	};
 
 	getUserDetails = async () => {
@@ -18,15 +19,12 @@ class EditUserDetails extends Component {
 			const fetchedData = await response.json();
 			const { userData } = fetchedData;
 			const updatedData = {
-				associateId: userData[0].associate_id,
-				specializationName: userData[0].specialization_name,
+				specializationName: userData[0].specialization,
 				associateName: userData[0].associate_name,
 				phone: userData[0].phone,
 				address: userData[0].address,
-				specializationId: userData[0].specialization_id,
 				checked: editedUserDetails.checked,
 			};
-			console.log("sdaf");
 
 			this.setState({
 				fetchUserDetails: updatedData,
@@ -41,26 +39,38 @@ class EditUserDetails extends Component {
 
 	onChangeUserFormDetails = (event) => {
 		const { updateUserData } = this.state;
-		const editFieldName = event.target.getAttribute("name");
 		const editFieldValue = event.target.value;
 		const newUserDetails = { ...updateUserData };
-		newUserDetails[editFieldName] = editFieldValue;
+		const editFieldName = event.target.getAttribute("name");
+		if (editFieldName === "specializationName") {
+			const id = event.target.id;
+			let { specList } = this.state;
+			if (event.target.checked) {
+				if (!specList.includes(id)) {
+					specList.push(parseInt(id));
+				}
+			} else {
+				let result = specList.filter((eachId) => eachId !== parseInt(id));
+				specList = [...result];
+			}
+			this.setState({ specList: [...specList] }, () => {
+				newUserDetails[editFieldName] = specList;
+			});
+		} else {
+			newUserDetails[editFieldName] = editFieldValue;
+		}
 		this.setState({ updateUserData: newUserDetails });
 	};
 
 	saveDetails = async () => {
 		const { getAllUserDetails } = this.props;
-
-		console.log("save");
 		const { updateUserData } = this.state;
-		const { setEditUserId } = this.props;
+		const { setEditUserId, editedUserDetails } = this.props;
 		const dbData = {
-			associate_id: updateUserData.associateId,
 			specialization_name: updateUserData.specializationName,
 			associate_name: updateUserData.associateName,
 			phone: updateUserData.phone,
 			address: updateUserData.address,
-			specialization_id: updateUserData.specializationId,
 		};
 		const options = {
 			method: "PUT",
@@ -69,10 +79,11 @@ class EditUserDetails extends Component {
 			},
 			body: JSON.stringify({ userData: dbData }),
 		};
-		const url = `http://localhost:9000/update-user/${updateUserData.associateId}`;
+		const url = `http://localhost:9000/update-user/${editedUserDetails.associateId}`;
+		console.log(url);
+
 		const response = await fetch(url, options);
 		if (response.ok) {
-			this.getUserDetails();
 			setEditUserId();
 			getAllUserDetails();
 		} else {
@@ -83,11 +94,13 @@ class EditUserDetails extends Component {
 	};
 
 	cancelEditUserDetails = () => {
+		const { setEditUserId } = this.props;
 		const { fetchUserDetails } = this.state;
-		this.setState({ updateUserData: fetchUserDetails }, fetchUserDetails());
+		this.setState({ updateUserData: fetchUserDetails }, setEditUserId());
 	};
 
 	render() {
+		const { specializationsList } = this.props;
 		const { updateUserData } = this.state;
 		return (
 			<tr>
@@ -106,14 +119,23 @@ class EditUserDetails extends Component {
 					/>
 				</td>
 				<td>
-					<input
-						type='text'
-						required='*required'
-						placeholder='Enter a specialization names...'
-						name='specializationName'
-						value={updateUserData.specializationName}
-						onChange={this.onChangeUserFormDetails}
-					/>
+					<div className='specialization-container'>
+						{specializationsList.map((eachSpec) => (
+							<div className='specialization-input-container'>
+								<input
+									key={eachSpec.specializationId}
+									type='checkbox'
+									name='specializationName'
+									id={eachSpec.specializationId}
+									value={eachSpec.specializationName}
+									onChange={this.onChangeUserFormDetails}
+								/>
+								<label htmlFor={eachSpec.specializationId}>
+									{eachSpec.specializationName}
+								</label>
+							</div>
+						))}
+					</div>
 				</td>
 				<td>
 					<input
